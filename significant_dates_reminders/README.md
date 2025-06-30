@@ -1,6 +1,6 @@
 # Significant Dates Reminders
 
-This Google Apps Script project sends reminders for birthdays and other significant dates from your Google Calendars.
+This Google Apps Script project sends reminders for birthdays and other significant dates from your Google Calendars. Written in TypeScript for better type safety and code quality.
 
 ## Setup
 
@@ -9,15 +9,27 @@ This Google Apps Script project sends reminders for birthdays and other signific
    ```
    npm install -g @google/clasp
    ```
-3. Login to clasp:
+3. Install TypeScript and type definitions for Google Apps Script:
+   ```
+   npm install -D typescript @types/google-apps-script
+   ```
+4. Login to clasp:
    ```
    clasp login
    ```
-4. Create a new Apps Script project:
+5. Create a new Apps Script project:
    ```
-   clasp create --title "Significant Dates Reminders" --rootDir ./significant_dates_reminders
+   clasp create --title "Significant Dates Reminders" --rootDir ./significant_dates_reminders --type sheets
    ```
-5. Push the code to your Apps Script project:
+6. Enable TypeScript in your `.clasp.json` file (it should include):
+   ```json
+   {
+     "scriptId": "your-script-id",
+     "rootDir": "./significant_dates_reminders",
+     "fileExtension": "ts"
+   }
+   ```
+7. Push the code to your Apps Script project:
    ```
    clasp push
    ```
