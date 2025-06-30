@@ -5,6 +5,7 @@ This Google Apps Script project sends reminders for birthdays and other signific
 ## Setup
 
 1. Clone this repository
+1. `cd ./significant_dates_reminders`
 2. Install the [clasp CLI](https://github.com/google/clasp) if you haven't already:
    ```
    npm install -g @google/clasp
@@ -19,7 +20,7 @@ This Google Apps Script project sends reminders for birthdays and other signific
    ```
 5. Create a new Apps Script project:
    ```
-   clasp create --title "Significant Dates Reminders" --rootDir ./significant_dates_reminders --type sheets
+   clasp create --title "Significant Dates Reminders" --rootDir .
    ```
 6. Enable TypeScript in your `.clasp.json` file (it should include):
    ```json
