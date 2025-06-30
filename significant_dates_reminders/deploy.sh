@@ -9,9 +9,10 @@ npx tsc
 echo "📤 Pushing code to Google Apps Script..."
 clasp push
 
-echo "📅 Setting calendar IDs..."
-# Read calendar IDs from .calendar_ids.json and format for clasp run
-CALENDAR_IDS=$(cat .calendar_ids.json | jq -c .)
-clasp run setCalendars -p "[$CALENDAR_IDS]"
-
 echo "✅ Deployment complete!"
+echo ""
+echo "📝 To configure custom calendar IDs:"
+echo "   1. Run: clasp open"
+echo "   2. Go to Project Settings (gear icon)"
+echo "   3. In Script Properties, add key 'CALENDAR_IDS' with JSON array value"
+echo "   4. Example: [\"your_calendar_id_1\", \"your_calendar_id_2\"]"
