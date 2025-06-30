@@ -55,7 +55,7 @@ function getCalendarIds(): string[] {
     try {
       return JSON.parse(calendarIdsJson);
     } catch (e) {
-      Logger.log(`Error parsing calendar IDs: ${e.toString()}`);
+      Logger.log(`Error parsing calendar IDs: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
