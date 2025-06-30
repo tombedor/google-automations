@@ -19,8 +19,7 @@ function getCalendarNames(): string[] {
 
   // Default calendar names if none are configured
   return [
-    'Contacts',     // Birthdays from contacts
-    'Holidays'      // US Holidays
+    'Holidays in United States'      // US Holidays
   ];
 }
 

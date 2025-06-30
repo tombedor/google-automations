@@ -4,3 +4,4 @@ node_modules/
 .aider*
 significant_dates_reminders/*.js
 significant_dates_reminders/*.js.map
+**.calendar_ids.json
