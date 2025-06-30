@@ -1,26 +1,26 @@
 
 /**
- * Function to get configured calendar IDs from script properties.
+ * Function to get configured calendar names from script properties.
  * Falls back to default values if not set.
  *
- * @return Array of calendar IDs
+ * @return Array of calendar names
  */
-function getCalendarIds(): string[] {
+function getCalendarNames(): string[] {
   const properties = PropertiesService.getScriptProperties();
-  const calendarIdsJson = properties.getProperty('CALENDAR_IDS');
+  const calendarNamesJson = properties.getProperty('CALENDAR_NAMES');
 
-  if (calendarIdsJson) {
+  if (calendarNamesJson) {
     try {
-      return JSON.parse(calendarIdsJson);
+      return JSON.parse(calendarNamesJson);
     } catch (e) {
-      Logger.log(`Error parsing calendar IDs: ${e instanceof Error ? e.message : String(e)}`);
+      Logger.log(`Error parsing calendar names: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
-  // Default calendar IDs if none are configured
+  // Default calendar names if none are configured
   return [
-    'addressbook#contacts@group.v.calendar.google.com',  // Contacts/Birthdays
-    'en.usa#holiday@group.v.calendar.google.com'         // US Holidays
+    'Contacts',     // Birthdays from contacts
+    'Holidays'      // US Holidays
   ];
 }
 
@@ -28,14 +28,14 @@ function getCalendarIds(): string[] {
  * Function to validate calendars and throw descriptive errors if they're null
  *
  * @param calendars - Array of calendar objects
- * @param calendarIds - Array of calendar IDs that were used
+ * @param calendarNames - Array of calendar names that were used
  */
-function validateCalendars(calendars: GoogleAppsScript.Calendar.Calendar[], calendarIds: string[]): void {
+function validateCalendars(calendars: GoogleAppsScript.Calendar.Calendar[], calendarNames: string[]): void {
   const errors: string[] = [];
 
   for (let i = 0; i < calendars.length; i++) {
     if (!calendars[i]) {
-      errors.push(`Calendar not found. Check the calendar ID: '${calendarIds[i]}'`);
+      errors.push(`Calendar not found with name: '${calendarNames[i]}'`);
     }
   }
 
@@ -51,17 +51,22 @@ function checkEvents(): void {
   const today = new Date();
   const user = Session.getActiveUser().getEmail();
 
-  // Get configured calendar IDs
-  const calendarIds = getCalendarIds();
+  // Get configured calendar names
+  const calendarNames = getCalendarNames();
 
-  // Get calendar objects
+  // Get calendar objects by name
   const calendars: GoogleAppsScript.Calendar.Calendar[] = [];
-  for (let i = 0; i < calendarIds.length; i++) {
-    calendars.push(CalendarApp.getCalendarById(calendarIds[i]));
+  for (let i = 0; i < calendarNames.length; i++) {
+    const calendarsByName = CalendarApp.getCalendarsByName(calendarNames[i]);
+    if (calendarsByName.length > 0) {
+      calendars.push(calendarsByName[0]); // Use the first calendar with this name
+    } else {
+      calendars.push(null as any); // Will be caught by validation
+    }
   }
 
   // Validate calendars - will throw descriptive errors if any calendar is null
-  validateCalendars(calendars, calendarIds);
+  validateCalendars(calendars, calendarNames);
 
   // Initialize event arrays
   let todayEvents: GoogleAppsScript.Calendar.CalendarEvent[] = [];

@@ -34,14 +34,14 @@ This Google Apps Script project sends reminders for birthdays and other signific
    ```
    clasp push
    ```
-6. (Optional) Configure custom calendar IDs:
+6. (Optional) Configure custom calendar names:
    - Run `clasp open` to open the Apps Script editor
    - Click on Project Settings (gear icon in the sidebar)
    - In the "Script Properties" section, click "Add script property"
-   - Set Property: `CALENDAR_IDS`
-   - Set Value: `["your_calendar_id_1", "your_calendar_id_2"]` (JSON array format)
-   - You can find a calendar's ID in its settings in Google Calendar
-   - If not configured, defaults to US holidays and birthdays
+   - Set Property: `CALENDAR_NAMES`
+   - Set Value: `["Calendar Name 1", "Calendar Name 2"]` (JSON array format)
+   - Use the exact names as they appear in your Google Calendar
+   - If not configured, defaults to "Contacts" and "Holidays"
 
 7. Set up a trigger to run the script daily:
    ```
@@ -57,17 +57,19 @@ The script will check your configured calendars for events and send you an email
 
 ## Configuration
 
-To configure custom calendar IDs:
+To configure custom calendar names:
 
 1. Open the Apps Script editor: `clasp open`
 2. Go to Project Settings (gear icon)
 3. In Script Properties, add or update:
-   - **Property**: `CALENDAR_IDS`
-   - **Value**: `["calendar_id_1", "calendar_id_2", "calendar_id_3"]`
+   - **Property**: `CALENDAR_NAMES`
+   - **Value**: `["Calendar Name 1", "Calendar Name 2", "Calendar Name 3"]`
 
-The script uses these default calendars if no custom configuration is set:
-- `addressbook#contacts@group.v.calendar.google.com` (Birthdays)
-- `en.usa#holiday@group.v.calendar.google.com` (US Holidays)
+The script uses these default calendar names if no custom configuration is set:
+- `Contacts` (Birthdays from contacts)
+- `Holidays` (US Holidays)
+
+**Note**: Use the exact calendar names as they appear in your Google Calendar sidebar.
 
 ## Note
 
