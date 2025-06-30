@@ -147,3 +147,26 @@ function getEventsInRange(calendar: GoogleAppsScript.Calendar.Calendar, startDat
   endDate.setDate(startDate.getDate() + days);
   return calendar.getEvents(startDate, endDate);
 }
+
+/**
+ * Setup function to create a daily trigger for the checkEvents function
+ * Run this once to set up the automation
+ */
+function setup(): void {
+  // Delete any existing triggers for this function to avoid duplicates
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'checkEvents') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  // Create a new daily trigger at 6 AM
+  ScriptApp.newTrigger('checkEvents')
+    .timeBased()
+    .everyDays(1)
+    .atHour(6)
+    .create();
+
+  Logger.log('Daily trigger created successfully. checkEvents will run every day at 6 AM local time.');
+}
