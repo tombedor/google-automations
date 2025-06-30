@@ -46,7 +46,7 @@ function validateCalendars(calendars: GoogleAppsScript.Calendar.Calendar[], cale
 /**
  * Main function to check events and send reminders
  */
-function checkEvents(): void {
+function main(): void {
   const today = new Date();
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
   const user = Session.getActiveUser().getEmail();
@@ -156,17 +156,17 @@ function setup(): void {
   // Delete any existing triggers for this function to avoid duplicates
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === 'checkEvents') {
+    if (triggers[i].getHandlerFunction() === 'main') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
   // Create a new daily trigger at 6 AM
-  ScriptApp.newTrigger('checkEvents')
+  ScriptApp.newTrigger('main')
     .timeBased()
     .everyDays(1)
     .atHour(6)
     .create();
 
-  Logger.log('Daily trigger created successfully. checkEvents will run every day at 6 AM local time.');
+  Logger.log('Daily trigger created successfully. main will run every day at 6 AM local time.');
 }
