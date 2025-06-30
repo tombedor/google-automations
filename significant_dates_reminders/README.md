@@ -43,11 +43,13 @@ This Google Apps Script project sends reminders for birthdays and other signific
    - Use the exact names as they appear in your Google Calendar
    - If not configured, defaults to "Contacts" and "Holidays"
 
-7. Set up a trigger to run the script daily:
+7. Set up the daily trigger and test the script:
    ```
    clasp open
    ```
-   Then in the Apps Script editor, click on "Triggers" in the sidebar, and set up a time-driven trigger to run the `checkEvents` function daily.
+   Then in the Apps Script editor:
+   - Run the `setup` function once to create the daily trigger
+   - Run the `main` function once to test that it works correctly
 
 ## Usage
 
