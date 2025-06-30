@@ -1,120 +1,139 @@
-// Function to initialize or update script properties with calendar IDs
-function setupCalendarConfig() {
+/**
+ * Function to set calendar IDs in script properties.
+ * This can be called via clasp CLI:
+ * clasp run setCalendars -p '[{"calendar_ids": ["id1", "id2", "id3"]}]'
+ *
+ * @param {Object} params - Parameters object with calendar_ids array
+ * @return {Object} Result of the operation
+ */
+function setCalendars(params) {
+  if (!params || !params.calendar_ids || !Array.isArray(params.calendar_ids)) {
+    return {
+      success: false,
+      error: "Invalid parameters. Expected: {calendar_ids: [id1, id2, ...]}"
+    };
+  }
+
   var properties = PropertiesService.getScriptProperties();
+  properties.setProperty('CALENDAR_IDS', JSON.stringify(params.calendar_ids));
 
-  // Set default values if they don't exist
-  if (!properties.getProperty('BIRTHDAYS_CALENDAR_ID')) {
-    properties.setProperty('BIRTHDAYS_CALENDAR_ID', 'addressbook#contacts@group.v.calendar.google.com');
-  }
-
-  if (!properties.getProperty('SIGNIFICANT_DATES_CALENDAR_NAME')) {
-    properties.setProperty('SIGNIFICANT_DATES_CALENDAR_NAME', 'Significant Dates');
-  }
-
-  if (!properties.getProperty('HOLIDAY_DATES_CALENDAR_NAME')) {
-    properties.setProperty('HOLIDAY_DATES_CALENDAR_NAME', 'Holidays in United States');
-  }
-
-  // Return the current configuration
   return {
-    birthdaysCalendarId: properties.getProperty('BIRTHDAYS_CALENDAR_ID'),
-    significantDatesCalendarName: properties.getProperty('SIGNIFICANT_DATES_CALENDAR_NAME'),
-    holidayDatesCalendarName: properties.getProperty('HOLIDAY_DATES_CALENDAR_NAME')
+    success: true,
+    message: "Successfully set " + params.calendar_ids.length + " calendar IDs",
+    calendar_ids: params.calendar_ids
   };
 }
 
-// Function to get calendar configuration
-function getCalendarConfig() {
+/**
+ * Function to get configured calendar IDs from script properties.
+ * Falls back to default values if not set.
+ *
+ * @return {Array} Array of calendar IDs
+ */
+function getCalendarIds() {
   var properties = PropertiesService.getScriptProperties();
-  return {
-    birthdaysCalendarId: properties.getProperty('BIRTHDAYS_CALENDAR_ID'),
-    significantDatesCalendarName: properties.getProperty('SIGNIFICANT_DATES_CALENDAR_NAME'),
-    holidayDatesCalendarName: properties.getProperty('HOLIDAY_DATES_CALENDAR_NAME')
-  };
+  var calendarIdsJson = properties.getProperty('CALENDAR_IDS');
+
+  if (calendarIdsJson) {
+    try {
+      return JSON.parse(calendarIdsJson);
+    } catch (e) {
+      Logger.log('Error parsing calendar IDs: ' + e.toString());
+    }
+  }
+
+  // Default calendar IDs if none are configured
+  return [
+    'addressbook#contacts@group.v.calendar.google.com',  // Contacts/Birthdays
+    'en.usa#holiday@group.v.calendar.google.com'         // US Holidays
+  ];
 }
 
-// Function to update calendar configuration
-function updateCalendarConfig(birthdaysCalendarId, significantDatesCalendarName, holidayDatesCalendarName) {
-  var properties = PropertiesService.getScriptProperties();
+/**
+ * Function to validate calendars and throw descriptive errors if they're null
+ *
+ * @param {Array} calendars - Array of calendar objects
+ * @param {Array} calendarIds - Array of calendar IDs that were used
+ */
+function validateCalendars(calendars, calendarIds) {
+  var errors = [];
 
-  if (birthdaysCalendarId) {
-    properties.setProperty('BIRTHDAYS_CALENDAR_ID', birthdaysCalendarId);
+  for (var i = 0; i < calendars.length; i++) {
+    if (!calendars[i]) {
+      errors.push("Calendar not found. Check the calendar ID: '" + calendarIds[i] + "'");
+    }
   }
 
-  if (significantDatesCalendarName) {
-    properties.setProperty('SIGNIFICANT_DATES_CALENDAR_NAME', significantDatesCalendarName);
+  if (errors.length > 0) {
+    throw new Error("Calendar validation failed:\n- " + errors.join("\n- "));
   }
-
-  if (holidayDatesCalendarName) {
-    properties.setProperty('HOLIDAY_DATES_CALENDAR_NAME', holidayDatesCalendarName);
-  }
-
-  return getCalendarConfig();
 }
 
+/**
+ * Main function to check events and send reminders
+ */
 function checkEvents() {
-  // Initialize configuration if needed
-  setupCalendarConfig();
-
-  // Get calendar configuration
-  var config = getCalendarConfig();
-
-  // Get calendar objects using the configuration
-  var BIRTHDAYS = CalendarApp.getCalendarById(config.birthdaysCalendarId);
-  var SIGNIFICANT_DATES = CalendarApp.getCalendarsByName(config.significantDatesCalendarName)[0];
-  var HOLIDAY_DATES = CalendarApp.getCalendarsByName(config.holidayDatesCalendarName)[0];
   var today = new Date();
   var user = Session.getActiveUser().getEmail();
+
+  // Get configured calendar IDs
+  var calendarIds = getCalendarIds();
+
+  // Get calendar objects
+  var calendars = [];
+  for (var i = 0; i < calendarIds.length; i++) {
+    calendars.push(CalendarApp.getCalendarById(calendarIds[i]));
+  }
+
+  // Validate calendars - will throw descriptive errors if any calendar is null
+  validateCalendars(calendars, calendarIds);
 
   // Initialize event arrays
   var todayEvents = [];
   var futureEvents = [];
 
-  // Define the date ranges for events
+  // Get today's events from all calendars
+  for (var i = 0; i < calendars.length; i++) {
+    todayEvents = todayEvents.concat(getEventsForDate(calendars[i], today));
+  }
 
-  // Add events from each calendar only if the calendar exists
-  if (BIRTHDAYS) todayEvents = todayEvents.concat(getEventsForDate(BIRTHDAYS, today));
-  if (SIGNIFICANT_DATES) todayEvents = todayEvents.concat(getEventsForDate(SIGNIFICANT_DATES, today));
-  if (HOLIDAY_DATES) todayEvents = todayEvents.concat(getEventsForDate(HOLIDAY_DATES, today));
-
+  // Get future events if today is Thursday (day 4)
   if (today.getDay() == 4) {
-    var futureEvents = [];
-    if (BIRTHDAYS) futureEvents = futureEvents.concat(getEventsInRange(BIRTHDAYS, today, 28));
-    if (SIGNIFICANT_DATES) futureEvents = futureEvents.concat(getEventsInRange(SIGNIFICANT_DATES, today, 28));
-    if (HOLIDAY_DATES) futureEvents = futureEvents.concat(getEventsInRange(HOLIDAY_DATES, today, 28));
+    for (var i = 0; i < calendars.length; i++) {
+      futureEvents = futureEvents.concat(getEventsInRange(calendars[i], today, 28));
+    }
   } else {
-    Logger.log("weekday is " + today.getDay().toString() + ". Not notifying on new events")
+    Logger.log("weekday is " + today.getDay().toString() + ". Not notifying on new events");
   }
 
   var reminderEvents = todayEvents.concat(futureEvents);
 
   if (reminderEvents.length == 0) {
-    Logger.log("no birthdays or significant events to remind")
-    return
+    Logger.log("no birthdays or significant events to remind");
+    return;
   } else {
-    Logger.log("found " + reminderEvents.length.toString() + " events to remind")
+    Logger.log("found " + reminderEvents.length.toString() + " events to remind");
   }
 
   // put together subject. max recommended email subject is 78 chars.
-
-  subject = "Reminder: " + reminderEvents.map((x) => {
+  var subject = "Reminder: " + reminderEvents.map((x) => {
     var entry = x.getTitle();
     if (x.getStartTime().getDate() == today.getDate()) {
-      entry += " (TODAY)"
+      entry += " (TODAY)";
     }
     return entry;
   }).join(", ").substring(0,77);
-  var body = ""
+  var body = "";
 
   if (todayEvents.length > 0) {
-    body += "Todays birthdays and significant dates:\n\n"
+    body += "Today's birthdays and significant dates:\n\n";
     for (var i = 0; i < todayEvents.length; i++) {
       body += todayEvents[i].getTitle() + " on " + todayEvents[i].getStartTime().toLocaleDateString() + "\n";
     }
   }
 
   if (futureEvents.length > 0) {
-    body += "\nThis month's birthdays and significant dates:\n\n"
+    body += "\nThis month's birthdays and significant dates:\n\n";
     for (var i = 0; i < futureEvents.length; i++) {
       body += futureEvents[i].getTitle() + " on " + futureEvents[i].getStartTime().toLocaleDateString() + "\n";
     }
@@ -123,13 +142,17 @@ function checkEvents() {
   GmailApp.sendEmail(user, subject, body);
 }
 
+/**
+ * Helper function to get events for a specific date
+ */
 function getEventsForDate(calendar, date) {
-  if (!calendar) return [];
   return calendar.getEventsForDay(date);
 }
 
+/**
+ * Helper function to get events in a date range
+ */
 function getEventsInRange(calendar, startDate, days) {
-  if (!calendar) return [];
   var endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + days);
   var events = calendar.getEvents(startDate, endDate);
