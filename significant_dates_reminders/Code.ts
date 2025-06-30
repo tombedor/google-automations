@@ -48,6 +48,7 @@ function validateCalendars(calendars: GoogleAppsScript.Calendar.Calendar[], cale
  */
 function checkEvents(): void {
   const today = new Date();
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
   const user = Session.getActiveUser().getEmail();
 
   // Get configured calendar names
@@ -79,7 +80,7 @@ function checkEvents(): void {
   // Get future events if today is Thursday (day 4)
   if (today.getDay() === 4) {
     for (let i = 0; i < calendars.length; i++) {
-      futureEvents = futureEvents.concat(getEventsInRange(calendars[i], today, 28));
+      futureEvents = futureEvents.concat(getEventsInRange(calendars[i], tomorrow, 28));
     }
   } else {
     Logger.log(`weekday is ${today.getDay().toString()}. Not notifying on new events`);
